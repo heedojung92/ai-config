@@ -13,6 +13,7 @@
 | `AGENTS.md` | 공통 지침의 정본과 작업별 가이드 선택. 대부분의 코딩 에이전트가 자동으로 읽는다 |
 | `CLAUDE.md` | `@AGENTS.md` import와 Claude Code 전용 사항 |
 | `guides/` | [개발](guides/development.md)·[리뷰](guides/review.md)·[플랫폼](guides/platform.md) 판단 기준. 해당 작업에서만 읽는다 |
+| `.claude/skills/` | Claude Code용 외부 skill(dbt·Airflow·K8s·Gradle·Kotlin JPA). 출처·commit·수정 내역은 [skills/README](.claude/skills/README.md) |
 | `.claude/settings.json` | Claude Code의 비밀 파일 읽기 deny와 attribution 끄기. 루트에서 시작한 로컬 세션과 claude.ai Project 밖의 단일 저장소 cloud 세션에만 적용되는 보조 장치이고 접근 통제를 대신하지 않는다 |
 
 ## 프로젝트
