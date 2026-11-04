@@ -1,0 +1,13 @@
+# 로컬 전용 작업물
+.local/
+
+# 환경·자격 파일. 예제 파일만 추적하고, 예제에는 비밀 없는 placeholder만 넣는다.
+.env
+.env.*
+!.env.example
+credentials/
+
+# OS
+.DS_Store
+
+# 실제 스택이 생기면 그 스택에 필요한 cache/build 패턴만 추가한다.
