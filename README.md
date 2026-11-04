@@ -13,7 +13,9 @@
 | `AGENTS.md` | 공통 지침의 정본과 작업별 가이드 선택. 대부분의 코딩 에이전트가 자동으로 읽는다 |
 | `CLAUDE.md` | `@AGENTS.md` import와 Claude Code 전용 사항 |
 | `guides/` | [개발](guides/development.md)·[리뷰](guides/review.md)·[플랫폼](guides/platform.md) 판단 기준. 해당 작업에서만 읽는다 |
-| `.claude/skills/` | Claude Code용 외부 skill(dbt·Airflow·K8s·Gradle·Kotlin JPA). 출처·commit·수정 내역은 [skills/README](.claude/skills/README.md) |
+| `.claude/skills/` | Claude Code skill: 외부 skill(dbt·Airflow·K8s·Gradle·Kotlin JPA)과 이 저장소의 `/handoff`·`/retro`. 출처·commit·수정 내역은 [skills/README](.claude/skills/README.md) |
+| `.claude/rules/` | dbt·Airflow·Kotlin·K8s 파일을 읽거나 고칠 때 Claude Code가 자동으로 불러오는 도메인 규칙 |
+| `.claude/agents/reviewer.md` | 파일을 고칠 수 없는 독립 리뷰용 하위 에이전트 |
 | `.claude/settings.json` | Claude Code의 비밀 파일 읽기 deny와 attribution 끄기. 루트에서 시작한 로컬 세션과 claude.ai Project 밖의 단일 저장소 cloud 세션에만 적용되는 보조 장치이고 접근 통제를 대신하지 않는다 |
 
 ## 프로젝트
@@ -43,6 +45,40 @@
 검증은 프로젝트가 사용하는 빌드·린트·테스트·렌더링·정적 분석·CI로 수행한다. 공통 검사 프레임워크나 자동 hook은 두지 않는다.
 
 작은 작업은 변경과 검증 결과를 보고한다. 세션을 넘기는 작업만 해당 프로젝트의 `NOTES.md`에 기록한다.
+
+## 루프와 규칙
+
+에이전트가 스스로 확인하며 끝내려면 결과가 통과·실패로 나오는 검사가 있어야 한다. 기본 루프는 `AGENTS.md`의 검증 루프이고, 확인 강도는 작업에 맞게 고른다.
+
+| 강도 | 방법 | 쓰는 때 |
+|---|---|---|
+| 지시 | 요청에 완료 조건과 검사 명령을 함께 쓴다 | 대부분의 작업 |
+| `/goal` | 매 턴이 끝날 때 별도 모델이 조건을 판정하고, 충족될 때까지 작업을 이어 간다 | 오래 걸리거나 지켜보지 않는 작업 |
+| Stop hook | 검사가 실패하면 끝내지 못하게 막는다(종료 코드 2, 연속 8회 상한) | 예외 없이 지켜야 하는 검사. 기본으로 두지 않고 빠른 검사가 있는 프로젝트에서 고른다 |
+| 독립 리뷰 | `/code-review` 또는 `reviewer` 하위 에이전트 | 크거나 위험한 변경을 끝낸 뒤 |
+
+`/goal` 조건은 종료 상태 하나, 그것을 보여 줄 명령, 바꾸면 안 되는 것, 턴 상한으로 쓴다. 평가 모델은 명령을 직접 실행하지 않고 대화에 나온 출력만 보므로, 조건에 Claude가 실행해 보여 줄 명령을 넣는다.
+
+```text
+/goal ./gradlew test --tests 'com.example.order.*'가 exit 0으로 끝나고, 기존 테스트 파일은 고치지 않았고, git push는 하지 않았다. 30턴이 지나면 멈추고 남은 실패를 보고한다
+```
+
+지켜보지 않고 맡기기 전에는 완료 조건, 스스로 할 검사, 건드려도 되는 범위(브랜치·worktree·권한), 멈출 조건(턴·비용 상한), 결과가 갈 곳과 승인할 사람을 정한다. CI·배포처럼 시간이 지나야 바뀌는 상태는 `/loop 15m <확인할 일>`로 확인한다. 같은 것을 두 번 고쳐도 틀리면 `/clear` 후 알게 된 것을 담아 다시 요청한다.
+
+| 명령 | 하는 일 |
+|---|---|
+| `/handoff` | 세션을 넘기기 전에 프로젝트 `NOTES.md`와 다음 `/goal` 조건 후보를 갱신한다 |
+| `/retro` | 이 세션에서 바로잡은 것을 모아 규칙 개선안을 만든다. 고른 안만 반영한다 |
+
+규칙은 지켜야 하는 강도와 범위에 따라 놓는다.
+
+| 위치 | 담는 것 | 로드 |
+|---|---|---|
+| `AGENTS.md` | 모든 작업의 행동 규칙과 검증 루프 | 항상 |
+| `projects/<name>/AGENTS.md` | 그 프로젝트의 명령·환경·제약 | 그 프로젝트를 다룰 때 |
+| `.claude/rules/*.md` | 도메인 파일의 함정 | 경로가 맞는 파일을 읽거나 고칠 때(Explore·Plan 하위 에이전트 포함) |
+| `.claude/skills/` | 여러 단계 절차 | 필요할 때나 사용자가 부를 때 |
+| `.claude/settings.json`, hook | 예외 없이 지켜야 하는 것 | 항상, Claude Code가 강제 |
 
 ## 지침 관리
 

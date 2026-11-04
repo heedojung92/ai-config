@@ -1,6 +1,8 @@
 # 가져온 skill
 
-Claude Code가 이 저장소에서 쓰는 skill이다. 각 폴더는 아래 upstream commit을 그대로 복사했고, 표시한 것만 이 저장소 규칙에 맞게 고쳤다. 폴더의 `LICENSE`는 upstream 원본이다. 2026-11-04에 가져왔다.
+Claude Code가 이 저장소에서 쓰는 skill이다. 아래 표의 폴더는 upstream commit을 그대로 복사했고, 표시한 것만 이 저장소 규칙에 맞게 고쳤다. 폴더의 `LICENSE`는 upstream 원본이다. 2026-11-04에 가져왔다.
+
+`handoff`·`retro`는 이 저장소에서 만든 skill이다. `disable-model-invocation: true`라 사용자가 `/handoff`·`/retro`로 부를 때만 실행된다.
 
 | skill | 출처 | commit | 라이선스 | 수정 |
 |---|---|---|---|---|

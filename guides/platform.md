@@ -32,6 +32,14 @@
 - 스키마 변경은 소비자 호환성을, 상태 변경은 복구·재처리 가능성을 확인한다.
 - 스케줄 등록·DAG 파싱·작업 성공·출력 데이터 정합을 구분한다.
 
+### 레이크하우스·medallion
+
+- 레이어마다 계약을 둔다. bronze는 원본을 바꾸지 않고 수집 메타데이터(수집 시각·원천 파일·offset)와 함께 append해 재처리할 수 있게 한다. silver는 타입 정리·중복 제거·키 보장을, gold는 소비자용 모델과 그 계약·테스트를 맡는다. gold가 bronze를 직접 읽는 식으로 레이어를 건너뛰면 이유를 적는다.
+- MERGE 전에 source를 키 기준으로 중복 제거한다. 같은 target 행에 source 행이 여럿 맞으면 엔진에 따라 실패하거나 결과가 설정에 따라 달라진다. 재실행 단위는 파티션이나 data interval로 정한다.
+- 높은 카디널리티 컬럼으로 파티션하지 않는다. 작은 파일이 쌓이면 compaction(Delta `OPTIMIZE`, Iceberg `rewrite_data_files`)을 검토한다.
+- Delta `VACUUM`과 Iceberg `expire_snapshots`는 time travel 범위를 줄이고, 보존 기간을 짧게 잡으면 실행 중인 reader·writer가 깨질 수 있다. Iceberg `remove_orphan_files`의 기준 시간을 짧게 잡으면 진행 중인 쓰기의 파일까지 지운다. 보존 기간을 줄이는 작업은 명시적 요청이 있을 때만 한다.
+- 컬럼 추가는 대개 안전하지만 타입 변경·삭제·이름 변경은 소비자와 엔진 지원을 먼저 확인한다. Delta의 `overwriteSchema`는 테이블을 덮어쓴다.
+
 ## Kubernetes
 
 | 변경 영역 | 확인할 계약·실패 형태 |
