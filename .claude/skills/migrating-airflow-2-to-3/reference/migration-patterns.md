@@ -465,7 +465,7 @@ All `Param` values must be JSON serializable. Parsed date/time `Param` values ar
 
 ### Cron scheduling semantics
 
-Cron schedules now default to `CronTriggerTimetable` instead of `CronDataIntervalTimetable`. Under the new timetable, `logical_date` equals `run_after` (not `data_interval_start`). Set `AIRFLOW__CORE__CREATE_CRON_DATA_INTERVALS=True` to revert to Airflow 2 behavior.
+Cron schedules now default to `CronTriggerTimetable` instead of `CronDataIntervalTimetable`. Under the new timetable, `logical_date` equals `run_after` (not `data_interval_start`). Set `AIRFLOW__SCHEDULER__CREATE_CRON_DATA_INTERVALS=True` to revert to Airflow 2 behavior.
 
 ### `logical_date` can be `None`
 

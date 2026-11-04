@@ -1,20 +1,27 @@
 ---
 paths:
-  - "**/k8s/**"
-  - "**/kubernetes/**"
-  - "**/manifests/**"
-  - "**/charts/**"
-  - "**/helm/**"
-  - "**/kustomize/**"
-  - "**/overlays/**"
+  - "**/k8s/**/*.yaml"
+  - "**/k8s/**/*.yml"
+  - "**/kubernetes/**/*.yaml"
+  - "**/kubernetes/**/*.yml"
+  - "**/manifests/**/*.yaml"
+  - "**/manifests/**/*.yml"
+  - "**/kustomize/**/*.yaml"
+  - "**/overlays/**/*.yaml"
+  - "**/charts/**/*.yaml"
+  - "**/charts/**/*.tpl"
+  - "**/helm/**/*.yaml"
+  - "**/helm/**/*.tpl"
   - "**/kustomization.yaml"
+  - "**/kustomization.yml"
   - "**/Chart.yaml"
   - "**/values*.yaml"
 ---
 # Kubernetes manifest 규칙
 
-- 검사 루프: `helm lint`와 `helm template` 또는 `kustomize build` 결과를 대상 클러스터 버전의 schema로 검사한다(예: `kubeconform -strict -kubernetes-version <버전>`). CRD schema가 없어 건너뛴 리소스는 보고한다. 클러스터에 닿는 `kubectl diff`·server dry-run은 그다음 단계이고, 적용은 명시적 요청이 있을 때만 한다.
-- 대상 클러스터 버전과 context·namespace를 먼저 확인하고, 그 버전이 제공하는 apiVersion만 쓴다.
+- 검사 루프: `helm lint`를 돌리고, `helm template` 또는 `kustomize build` 결과는 화면에 출력하지 않고 대상 클러스터 버전의 schema 검사로 넘긴다(예: `helm template <release> <chart> | kubeconform -strict -summary -kubernetes-version <버전>`). kubeconform은 기본으로 GitHub에서 schema를 내려받는다. schema가 없는 CRD는 `-skip <kind>`로 명시해 건너뛰고 그 kind를 보고한다.
+- `kubectl diff`·server dry-run은 쓰기와 같은 권한으로 클러스터에 닿으므로 사용자가 대상 context와 실행을 정했을 때만 하고, 적용은 명시적 요청이 있을 때만 한다.
+- 대상 클러스터 버전은 프로젝트 `AGENTS.md`나 구성에서 먼저 찾고, 그 버전이 제공하는 apiVersion만 쓴다.
 - Deployment·StatefulSet의 `spec.selector`는 만든 뒤 바꿀 수 없다. selector 라벨을 바꾸면 재생성이 필요하다고 보고한다.
 - 이미지는 `latest`가 아닌 고정 tag나 digest로 지정한다.
 - 컨테이너마다 CPU·메모리 requests를 둔다. 메모리 limit을 넘으면 OOMKilled되고 CPU limit은 throttling을 일으키므로, limit은 그 영향을 보고 팀 정책에 맞춰 정한다.

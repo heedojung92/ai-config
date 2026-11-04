@@ -19,12 +19,12 @@ Claude Code가 이 저장소에서 쓰는 skill이다. 아래 표의 폴더는 u
 
 - `using-dbt-for-analytics-engineering`: 모든 dbt 명령을 사전 승인하는 `allowed-tools`를 지웠다. dbt MCP 서버를 설치·설정하도록 권하는 줄을 "이미 설정돼 있으면 쓰고, 요청이 없으면 설치하지 않는다"로 바꿨다.
 - `running-dbt-commands`: 쓰기 전에 target을 확인하고 production target과 `--full-refresh`는 명시적 요청이 있을 때만 쓰는 항목을 추가했다.
-- `migrating-airflow-2-to-3`: Edit마다 실행되는 PostToolUse hook을 지웠다. `ruff --fix --unsafe-fixes .`를 바로 돌리던 단계를 검사 먼저, 요청 범위의 `--fix`, 사용자 동의 후 `--unsafe-fixes` 순서로 바꿨다. 버전 권고에 현재 릴리스를 확인하라는 말을 붙였다.
+- `migrating-airflow-2-to-3`: Edit마다 실행되는 PostToolUse hook을 지웠다. `ruff --fix --unsafe-fixes .`를 바로 돌리던 단계를 검사 먼저, 요청 범위의 `--fix`, 사용자 동의 후 `--unsafe-fixes` 순서로 바꿨다. 버전 권고에 현재 릴리스를 확인하라는 말을 붙였다. cron data interval 설정 이름을 `AIRFLOW__SCHEDULER__CREATE_CRON_DATA_INTERVALS`로 바로잡았다(upstream 표기는 `..._INTERVAL`·`AIRFLOW__CORE__...`로 틀려 있었다).
 - `gradle-best-practices`: 답을 받을 수 없을 때 확인 없이 수정을 적용하라는 절을 "요청하지 않은 변경은 적용하지 않는다"로 바꿨다. 무인 실행에서 구조 변경을 계획만 적고 진행하던 문구를 지웠다.
 
 ## 알려진 한계
 
-- 모두 영어다. 한국어 요청에서 덜 불릴 수 있어 `CLAUDE.md`에 작업별 사용 표를 둔다.
+- 가져온 skill은 모두 영어다. 한국어 요청에서 덜 불릴 수 있어 `CLAUDE.md`에 작업별 사용 표를 둔다.
 - dbt·Airflow skill 본문은 이 저장소에 없는 다른 skill(`answering-natural-language-questions-with-dbt`, `testing-dags` 등)을 가리키는 곳이 있다. 없는 skill은 건너뛴다.
 - `kubernetes-skill`은 개인 유지 저장소이고, kubeconform 예시 버전이 1.29~1.30이다. 대상 클러스터 버전으로 바꿔 쓴다. schema 예시가 외부 호스트(datreeio CRDs-catalog)를 가리킨다.
 - `kotlin-backend-jpa-entity-mapping`의 `hashCode() = javaClass.hashCode()`는 Hibernate proxy 클래스와 실제 클래스에서 값이 다를 수 있다. proxy와 섞어 `Set`에 넣는 코드는 따로 확인한다.
