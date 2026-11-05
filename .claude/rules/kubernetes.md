@@ -27,7 +27,7 @@ paths:
 ---
 # Kubernetes manifest 규칙
 
-- 검증 루프: `helm lint`를 돌리고, `helm template` 또는 `kustomize build` 결과는 화면에 출력하지 않고 대상 클러스터 버전의 schema 검사로 넘긴다(예: `helm template <release> <chart> --kube-version <x.y.z> | kubeconform -strict -summary -kubernetes-version <x.y.z>`). 버전은 `1.29`가 아니라 `1.29.0`처럼 쓴다. 짧게 쓰면 모든 kind의 schema를 찾지 못한다. kubeconform은 기본으로 GitHub에서 schema를 내려받는다. schema가 없는 CRD는 `-skip <kind>`로 명시해 건너뛰고 그 kind를 보고한다. schema 검사는 값이 반영됐는지 보여 주지 않으므로, 바꾼 값은 Secret이 아닌 템플릿만 `helm template ... --show-only <템플릿 경로>`로 렌더해 확인한다.
+- 검증 루프: `helm lint`를 돌리고, `helm template` 또는 `kustomize build` 결과는 화면에 출력하지 않고 대상 클러스터 버전의 schema 검사로 넘긴다(예: `helm template <release> <chart> --kube-version <x.y.z> | kubeconform -strict -summary -kubernetes-version <x.y.z>`). 버전은 `1.29`가 아니라 `1.29.0`처럼 쓴다. 짧게 쓰면 모든 kind의 schema를 찾지 못한다. kubeconform은 기본으로 GitHub에서 schema를 내려받는다. schema가 없는 CRD는 `-skip <kind>`로 명시해 건너뛰고 그 kind를 보고한다. schema 검사는 값이 반영됐는지 보여 주지 않으므로, 바꾼 값은 비밀 values를 빼고 Secret이 아닌 템플릿만 `helm template ... --show-only <템플릿 경로>`로 렌더해 확인한다.
 - `kubectl diff`·server dry-run은 쓰기와 같은 권한으로 클러스터에 닿으므로 사용자가 대상 context와 실행을 정했을 때만 하고, 적용은 명시적 요청이 있을 때만 한다.
 - 대상 클러스터 버전은 프로젝트 `AGENTS.md`나 구성에서 먼저 찾고, 그 버전이 제공하는 apiVersion만 쓴다.
 - Deployment·StatefulSet의 `spec.selector`는 만든 뒤 바꿀 수 없다. selector 라벨을 바꾸면 재생성이 필요하다고 보고한다.

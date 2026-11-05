@@ -16,12 +16,16 @@
       "Read(/**/kubeconfig)",
       "Read(/**/kubeconfig.y*ml)",
       "Read(/**/*.kubeconfig)",
+      "Read(/**/.kube/**)",
       "Read(/**/profiles.yml)",
       "Read(~/.kube/**)",
       "Read(~/.dbt/**)",
       "Read(~/.aws/**)",
       "Read(~/.config/gcloud/**)",
-      "Read(~/.azure/**)"
+      "Read(~/.azure/**)",
+      "Read(~/.databrickscfg)",
+      "Read(~/.terraform.d/**)",
+      "Read(~/.docker/config.json)"
     ]
   },
   "attribution": {

@@ -16,7 +16,7 @@
 | `.claude/skills/` | Claude Code skill: 외부 skill(dbt·Airflow·K8s·Gradle·Kotlin JPA)과 이 저장소의 `/handoff`·`/retro`. 출처·commit·수정 내역은 [skills/README](.claude/skills/README.md) |
 | `.claude/rules/` | dbt·Airflow·Kotlin·K8s 파일을 읽거나 고칠 때 Claude Code가 자동으로 불러오는 도메인 규칙 |
 | `.claude/agents/reviewer.md` | 파일을 고칠 수 없는 독립 리뷰용 하위 에이전트 |
-| `.claude/settings.json` | Claude Code의 비밀 파일 읽기 deny, attribution 끄기, Bash 작업 디렉터리 고정. 루트에서 시작한 로컬 세션과 claude.ai Project 밖의 단일 저장소 cloud 세션에만 적용되는 보조 장치이고 접근 통제를 대신하지 않는다 |
+| `.claude/settings.json` | Claude Code의 비밀 파일 읽기 deny(같은 경로의 Edit·Write도 막으므로 그 파일은 사용자가 고친다), attribution 끄기, Bash 작업 디렉터리 고정. 루트에서 시작한 로컬 세션과 claude.ai Project 밖의 단일 저장소 cloud 세션에만 적용되는 보조 장치이고 접근 통제를 대신하지 않는다 |
 
 claude.ai Project의 cloud thread는 루트 `CLAUDE.md`만 읽고 경로별 rules·skills·agents·settings는 쓰지 않는다(이 저장소의 rules는 모두 경로별이다).
 
@@ -40,7 +40,7 @@ claude.ai Project의 cloud thread는 루트 `CLAUDE.md`만 읽고 경로별 rule
 
 현재 프로젝트가 없으면 공통 검증 명령도 없다. 새 스택에서 비밀이 담길 수 있는 파일 이름이 생기면 `AGENTS.md`의 목록, `.gitignore`, `.claude/settings.json` deny를 함께 보강한다.
 
-별도 저장소의 코드를 다룰 때는 그 저장소를 직접 대상으로 작업하고 복제된 소스 사본을 이곳에 쌓지 않는다. 그 저장소의 규칙·검증 명령·권한을 따른다. 이 저장소의 `.claude/` rules·skills·settings는 이 저장소에서 시작한 세션의 이 저장소 파일에만 적용되므로, 별도 저장소에서 쓰려면 그 저장소에 따로 둔다.
+별도 저장소의 코드를 다룰 때는 그 저장소를 직접 대상으로 작업하고 복제된 소스 사본을 이곳에 쌓지 않는다. 그 저장소의 규칙·검증 명령·권한을 따른다. 이 저장소의 경로별 rules와 `/` 기준 deny는 이 저장소 경로에만 걸리므로, 별도 저장소에서 같은 규칙이 필요하면 그 저장소에 둔다.
 
 ## 검증과 기록
 
@@ -59,21 +59,21 @@ claude.ai Project의 cloud thread는 루트 `CLAUDE.md`만 읽고 경로별 rule
 | Stop hook | 검사가 실패하면 끝내지 못하게 막는다(종료 코드 2). 도구 호출 없이 8번 연속 막히면 Claude Code가 턴을 끝내고, 도구 호출이 끼면 횟수가 다시 시작된다 | 예외 없이 지켜야 하는 검사. 기본으로 두지 않고 빠른 검사가 있는 프로젝트에서 고른다 |
 | 독립 리뷰 | `/code-review` 또는 `reviewer` 하위 에이전트. 맡기기 전에 diff에 비밀 파일이 없는지 본다 | 크거나 위험한 변경을 끝낸 뒤 |
 
-Stop hook을 쓰려면 별도 저장소는 그 저장소의 `.claude/settings.json`에, 이 저장소의 프로젝트는 개인 `.claude/settings.local.json`에 둔다. `projects/<name>/.claude/`의 설정은 루트에서 시작한 세션에 적용되지 않는다.
+Stop hook을 쓰려면 별도 저장소는 그 저장소의 `.claude/settings.json`에, 이 저장소의 프로젝트는 개인 `.claude/settings.local.json`에 둔다. 루트의 local hook은 모든 프로젝트 작업에서 실행되므로 바뀐 경로가 그 프로젝트일 때만 검사하게 쓴다. `projects/<name>/.claude/`의 설정은 `/cd`로 그 디렉터리로 옮긴 세션에만 적용되고, 옮기면 루트 `.claude/settings.json` 대신 그 디렉터리 설정이 쓰일 수 있다.
 
 `/goal` 조건은 종료 상태 하나, 그것을 보여 줄 명령, 바꾸면 안 되는 것, 멈출 조건(턴 상한, 권한·정보가 필요할 때)으로 쓴다. 평가 모델은 명령을 직접 실행하지 않고 대화에 나온 출력만 보므로, 바꾸면 안 되는 것도 Claude가 실행해 보여 줄 수 있게 쓴다. `/goal`은 권한 모드를 바꾸지 않으므로 지켜보지 않고 돌리려면 auto mode에서 쓴다.
 
 ```text
-/goal ./gradlew :order:test --tests 'com.example.order.*'가 exit 0으로 끝나고, git diff --stat에 기존 테스트 파일과 빌드 파일이 없고, git push는 하지 않았다. 30턴이 지나거나 권한·정보가 필요하면 멈추고 남은 실패와 필요한 것을 보고한다
+/goal ./gradlew :order:test --tests 'com.example.order.*'가 exit 0으로 끝나고, git diff --stat <시작 commit>에 기존 테스트 파일과 빌드 파일이 없고, git push는 하지 않았다. 30턴이 지나거나 권한·정보가 필요하면 멈추고 남은 실패와 필요한 것을 보고한다
 ```
 
 지켜보지 않고 맡기기 전에는 완료 조건, 스스로 할 검사, 건드려도 되는 범위(브랜치·worktree·권한), 멈출 조건(턴·비용 상한), 결과가 갈 곳과 승인할 사람을 정한다. CI·배포처럼 시간이 지나야 바뀌는 상태는 `/loop <확인할 일>`로 확인한다. 간격을 주지 않으면 Claude가 일이 끝났을 때 멈추고, `/loop 15m <확인할 일>`처럼 간격을 주면 취소를 요청할 때까지 최대 7일 돈다. 같은 것을 두 번 고쳐도 틀리면 필요할 때 `/retro`로 바로잡은 것을 먼저 남기고, `/clear` 후 알게 된 것을 담아 다시 요청한다.
 
-`/verify`는 실행 방법을 저장소 루트(monorepo면 바꾼 패키지)의 `.claude/skills/verify/SKILL.md`에 기록할 수 있다. 루트에 기록된 `verify` skill은 다음 세션부터 모든 프로젝트의 commit 전에 실행하라는 지시를 붙이고, 하위 디렉터리의 기록은 루트에서 시작한 세션에 그 지시를 붙이지 않는다. `/run-skill-generator`는 env 값을 포함한 실행 방법을 `.claude/skills/run-<name>/`에 기록하고 바로 commit한다. 기록된 파일은 비밀값·연결 정보·`allowed-tools`·hook·`!` 명령이 없는지 검토한다.
+`/verify`는 실행 방법을 저장소 루트(monorepo면 바꾼 패키지)의 `.claude/skills/verify/SKILL.md`에 기록할 수 있다. 루트에 기록된 `verify` skill은 다음 세션부터 모든 프로젝트의 commit 전에 실행하라는 지시를 붙이고, 하위 디렉터리의 기록은 루트에서 시작한 세션에 그 지시를 붙이지 않는다. `/run-skill-generator`는 env 값을 포함한 실행 방법을 `.claude/skills/run-<name>/`에 기록하고 바로 commit하므로 push 전에 검토하고, 비밀값이 들어갔으면 commit을 고친다. 기록된 파일은 비밀값·연결 정보·`allowed-tools`·hook·`!` 명령이 없는지 검토한다.
 
 | 명령 | 하는 일 |
 |---|---|
-| `/handoff` | 세션을 넘기기 전에 프로젝트 `NOTES.md`를 갱신한다. 다음 행동에 `/goal` 조건 후보를 넣는다 |
+| `/handoff` | 세션을 넘기기 전에 프로젝트 `NOTES.md`를 갱신한다. 오래 걸리거나 지켜보지 않을 작업이면 다음 행동에 `/goal` 조건 후보를 넣는다 |
 | `/retro` | 이 세션에서 바로잡은 것을 모아 규칙 개선안을 만든다. 고른 안만 반영한다 |
 
 규칙은 지켜야 하는 강도와 범위에 따라 놓는다.

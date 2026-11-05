@@ -19,7 +19,7 @@ Claude Code가 이 저장소에서 쓰는 skill이다. 아래 표의 폴더는 u
 
 - `using-dbt-for-analytics-engineering`: `dbt`·`jq` 명령과 Read·Write·Edit·Glob·Grep을 사전 승인하는 `allowed-tools`를 지웠다. dbt MCP 서버를 설치·설정하도록 권하는 줄을 "이미 설정돼 있으면 쓰고, 요청이 없으면 설치하지 않는다"로 바꿨다. `dbt show`로 데이터를 보라는 절에 운영 데이터의 행은 집계로만 보고 기록 파일에 넣지 않는다는 문단을 더했다.
 - `running-dbt-commands`: 쓰기 전에 target을 확인하고 production target과 `--full-refresh`는 명시적 요청이 있을 때만 쓰며 `profiles.yml`을 출력하지 않는 항목(5)과, 운영 데이터 행을 출력하지 않는 항목(6)을 추가했다. `--full-refresh` 예시 주석에 같은 제한을 적었다.
-- `migrating-airflow-2-to-3`: Edit마다 실행되는 PostToolUse hook을 지웠다. `ruff --fix --unsafe-fixes .`를 바로 돌리던 단계(요약과 명령 블록)를 요청한 경로(`<paths>`)에 대해 검사 먼저, `--fix`, 사용자 동의 후 `--unsafe-fixes` 순서로 바꿨다. 버전 권고의 `3.0.11`이 Astro Runtime 3.0-11임을 밝히고(Apache Airflow 3.0.x는 3.0.6까지) 현재 릴리스를 확인하라는 말을 붙였다. cron data interval 설정 이름을 `AIRFLOW__SCHEDULER__CREATE_CRON_DATA_INTERVALS`로 바로잡고(`SKILL.md`, `reference/migration-patterns.md`. upstream 표기는 `..._INTERVAL`·`AIRFLOW__CORE__...`로 틀려 있었다), 이 설정이 배포 전체에 적용되므로 DAG 하나는 timetable을 명시하라는 말을 더했다.
+- `migrating-airflow-2-to-3`: Edit마다 실행되는 PostToolUse hook을 지웠다. `ruff --fix --unsafe-fixes .`를 바로 돌리던 단계(요약과 명령 블록)를 요청한 경로(`<paths>`)에 대해 검사 먼저, `--fix`, 사용자 동의 후 `--unsafe-fixes` 순서로 바꿨다. 버전 권고의 `3.0.11`이 Astro Runtime 3.0-11임을 밝히고(Apache Airflow 3.0.x는 3.0.6까지) 현재 릴리스를 확인하라는 말을 붙였다. cron data interval 설정 이름을 `AIRFLOW__SCHEDULER__CREATE_CRON_DATA_INTERVALS`로 바로잡았다(`SKILL.md`, `reference/migration-patterns.md`. upstream 표기는 `..._INTERVAL`·`AIRFLOW__CORE__...`로 틀려 있었다). 이 설정을 권하는 세 곳에, 설정이 배포 전체에 적용되고 Airflow 3 실행이 생긴 뒤 data interval timetable로 바꾸면 설정이든 명시든 예약 실행 하나를 건너뛰므로 업그레이드 전에 정하라는 말을 더했다.
 - `gradle-best-practices`: 답을 받을 수 없을 때 확인 없이 수정을 적용하라는 절을 "요청하지 않은 변경은 적용하지 않는다"로 바꿨다. 무인 실행에서 구조 변경을 계획만 적고 진행하던 문구를 지웠다.
 
 ## 알려진 한계
@@ -30,7 +30,7 @@ Claude Code가 이 저장소에서 쓰는 skill이다. 아래 표의 폴더는 u
 - 고치지 않고 둔 줄 중 이 저장소 규칙과 다른 것: `kubernetes-skill`의 클러스터에 쓰는 확인 예시(`kubectl get secrets -A -o json | kubectl replace -f -`, `kubectl run`, `rollout undo`, PVC `patch`, `flux reconcile`, `helm test`), 버전·checksum 없이 `releases/latest`를 내려받고 Actions를 tag로 고정한 CI 예시, 평문 비밀번호가 든 kustomize `secretGenerator` 예시, `working-with-dbt-mesh`의 unsuffixed relation을 지우는 프로젝트 전체 post-hook(`drop_relation_if_exists`)과 production deployment 실행 안내, `running-dbt-commands`의 `--select` 없는 `dbt run` 예시, `discovering-data.md`의 `SELECT *` 표본, Airflow `removed-methods.md`의 `airflow_db` connection 예시, Gradle fix 문서의 "commit it". `AGENTS.md`의 원격 변경·비밀·git 규칙이 우선한다.
 - `kotlin-backend-jpa-entity-mapping`의 `hashCode() = javaClass.hashCode()`는 Hibernate proxy 클래스와 실제 클래스에서 값이 다를 수 있다. proxy와 섞어 `Set`에 넣는 코드는 따로 확인한다.
 - `gradle-wrapper-upgrade`는 `services.gradle.org`·`downloads.gradle.org`에 접속하고 배포본(100MB 이상)을 내려받는다. 네트워크가 막힌 환경에서는 명령 안내만 가능하다.
-- skill 지시가 `AGENTS.md`·`guides/`와 다르면 `AGENTS.md`·`guides/`를, `.claude/rules/`와 다르면 규칙을 따른다.
+- skill 지시가 `AGENTS.md`·`guides/`·`.claude/rules/`와 충돌하면 그쪽을 따른다.
 
 ## 추가·갱신 기준
 

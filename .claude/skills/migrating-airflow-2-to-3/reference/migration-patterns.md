@@ -1,6 +1,6 @@
 # Migration Patterns Reference
 
-> 이 저장소 사본은 `astronomer/agents@35b9610bb271`에서 가져와 cron 설정 이름을 바로잡았다. 수정 내역은 `.claude/skills/README.md`에 있다.
+> 이 저장소 사본은 `astronomer/agents@35b9610bb271`에서 가져와 cron 설정 이름을 바로잡고 설정을 바꿀 때의 주의를 더했다. 수정 내역은 `.claude/skills/README.md`에 있다.
 
 Detailed code examples for Airflow 2 to 3 migration.
 
@@ -467,7 +467,7 @@ All `Param` values must be JSON serializable. Parsed date/time `Param` values ar
 
 ### Cron scheduling semantics
 
-Cron schedules now default to `CronTriggerTimetable` instead of `CronDataIntervalTimetable`. Under the new timetable, `logical_date` equals `run_after` (not `data_interval_start`). Set `AIRFLOW__SCHEDULER__CREATE_CRON_DATA_INTERVALS=True` to revert to Airflow 2 behavior.
+Cron schedules now default to `CronTriggerTimetable` instead of `CronDataIntervalTimetable`. Under the new timetable, `logical_date` equals `run_after` (not `data_interval_start`). Set `AIRFLOW__SCHEDULER__CREATE_CRON_DATA_INTERVALS=True` to revert to Airflow 2 behavior. Decide before the upgrade: the flag applies to every bare-cron DAG, and switching after Airflow 3 runs exist skips one scheduled run.
 
 ### `logical_date` can be `None`
 

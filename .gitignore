@@ -10,6 +10,8 @@ tfplan
 kubeconfig
 kubeconfig.y*ml
 *.kubeconfig
+.kube/
+profiles.yml
 .DS_Store
 CLAUDE.local.md
 .claude/settings.local.json
