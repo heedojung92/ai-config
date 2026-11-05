@@ -7,24 +7,32 @@ paths:
   - "**/manifests/**/*.yaml"
   - "**/manifests/**/*.yml"
   - "**/kustomize/**/*.yaml"
+  - "**/kustomize/**/*.yml"
   - "**/overlays/**/*.yaml"
+  - "**/overlays/**/*.yml"
   - "**/charts/**/*.yaml"
+  - "**/charts/**/*.yml"
   - "**/charts/**/*.tpl"
+  - "**/chart/**/*.yaml"
+  - "**/chart/**/*.yml"
+  - "**/chart/**/*.tpl"
   - "**/helm/**/*.yaml"
+  - "**/helm/**/*.yml"
   - "**/helm/**/*.tpl"
   - "**/kustomization.yaml"
   - "**/kustomization.yml"
   - "**/Chart.yaml"
   - "**/values*.yaml"
+  - "**/values*.yml"
 ---
 # Kubernetes manifest 규칙
 
-- 검사 루프: `helm lint`를 돌리고, `helm template` 또는 `kustomize build` 결과는 화면에 출력하지 않고 대상 클러스터 버전의 schema 검사로 넘긴다(예: `helm template <release> <chart> | kubeconform -strict -summary -kubernetes-version <버전>`). kubeconform은 기본으로 GitHub에서 schema를 내려받는다. schema가 없는 CRD는 `-skip <kind>`로 명시해 건너뛰고 그 kind를 보고한다.
+- 검증 루프: `helm lint`를 돌리고, `helm template` 또는 `kustomize build` 결과는 화면에 출력하지 않고 대상 클러스터 버전의 schema 검사로 넘긴다(예: `helm template <release> <chart> --kube-version <x.y.z> | kubeconform -strict -summary -kubernetes-version <x.y.z>`). 버전은 `1.29`가 아니라 `1.29.0`처럼 쓴다. 짧게 쓰면 모든 kind의 schema를 찾지 못한다. kubeconform은 기본으로 GitHub에서 schema를 내려받는다. schema가 없는 CRD는 `-skip <kind>`로 명시해 건너뛰고 그 kind를 보고한다. schema 검사는 값이 반영됐는지 보여 주지 않으므로, 바꾼 값은 Secret이 아닌 템플릿만 `helm template ... --show-only <템플릿 경로>`로 렌더해 확인한다.
 - `kubectl diff`·server dry-run은 쓰기와 같은 권한으로 클러스터에 닿으므로 사용자가 대상 context와 실행을 정했을 때만 하고, 적용은 명시적 요청이 있을 때만 한다.
 - 대상 클러스터 버전은 프로젝트 `AGENTS.md`나 구성에서 먼저 찾고, 그 버전이 제공하는 apiVersion만 쓴다.
 - Deployment·StatefulSet의 `spec.selector`는 만든 뒤 바꿀 수 없다. selector 라벨을 바꾸면 재생성이 필요하다고 보고한다.
 - 이미지는 `latest`가 아닌 고정 tag나 digest로 지정한다.
-- 컨테이너마다 CPU·메모리 requests를 둔다. 메모리 limit을 넘으면 OOMKilled되고 CPU limit은 throttling을 일으키므로, limit은 그 영향을 보고 팀 정책에 맞춰 정한다.
+- 컨테이너마다 CPU·메모리 requests를 둔다. 메모리 limit을 넘으면 OOMKilled될 수 있고 CPU limit은 throttling을 일으키므로, limit은 그 영향을 보고 팀 정책에 맞춰 정한다.
 - readinessProbe는 트래픽을 받을 수 있는지, livenessProbe는 프로세스가 고장 났는지만 본다. liveness가 DB 같은 외부 의존성에 걸리면 연쇄 재시작이 난다.
 - 기본 securityContext는 `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`, `seccompProfile.type: RuntimeDefault`이다. 풀어야 하면 이유를 적는다.
 - Secret 값은 manifest·values 파일에 커밋하지 않는다. base64는 암호화가 아니다. 프로젝트의 비밀 관리 방식(External Secrets·Sealed Secrets 등)을 따른다.

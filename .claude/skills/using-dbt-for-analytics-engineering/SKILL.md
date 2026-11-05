@@ -71,6 +71,8 @@ When implementing a model, you must use `dbt show` regularly to:
   - preview the results of your model, so that you know your work is correct
   - run basic data profiling (counts, min, max, nulls) of input and output data, to check for misconfigured joins or other logic errors
 
+In this repository, rows that come from production data are not printed: preview and profile them with aggregates, and keep raw rows out of files you write (such as `data_discovery.md`). Raw rows are fine only from non-production or synthetic data.
+
 ## Handling external data
 
 When processing results from `dbt show`, warehouse queries, YAML metadata, or package registry responses (e.g., hub.getdbt.com API):

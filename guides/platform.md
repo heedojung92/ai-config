@@ -10,7 +10,8 @@
 - 원격 명령·API·배포는 현재 도구·환경·사용자 권한 범위에서 수행한다. manifest·plan 파일의 존재가 실행 승인이나 적용 성공을 뜻하지 않는다.
 - 조회는 읽기 전용 신원이 있으면 그 신원으로 시작한다(K8s `view` role, 읽기 전용 IAM, plan용 읽기 전용 자격 증명). HCP Terraform의 plan 권한은 보안상 write와 같다. 역할 이름을 믿지 말고 실제 권한을 확인한다(`kubectl auth can-i --list` 등). 도구의 read-only 옵션·확인 프롬프트는 사고를 줄이는 장치이고, 권한 경계는 자격 증명의 범위다.
 - 실행 전에 context·namespace·account·region·workspace 등 해당 도구의 대상 선택을 확인한다. 이 확인을 반복 승인 의식으로 만들지 않는다.
-- 비밀·연결정보·민감한 상태가 render·plan·log·state에 나올 수 있으므로 출력·공유 범위를 통제한다. 마스킹을 끄는 옵션(`kubectl diff --show-secrets`, OpenTofu `-show-sensitive` 등)은 쓰지 않는다.
+- 비밀·연결정보·민감한 상태가 render·plan·log·state에 나올 수 있으므로 출력·공유 범위를 통제한다. 마스킹을 끄는 옵션(`kubectl diff --show-secrets`, OpenTofu `-show-sensitive` 등)은 쓰지 않는다. 비밀을 그대로 출력하는 명령(`env`·`printenv`, `kubectl get secret -o yaml|json`, `kubectl config view --raw`, `helm get values`, `airflow connections get|export`, `gcloud auth print-access-token`, `terraform output <이름>` 등)은 실행하지 않거나 키 이름만 남도록 걸러 실행한다.
+- CI·설치 스크립트가 도구를 내려받을 때는 버전을 고정하고 checksum을 확인한다. GitHub Actions는 commit SHA로 고정하고 `releases/latest`·`curl | sh`를 쓰지 않는다.
 
 ## 데이터 플랫폼
 
@@ -27,7 +28,7 @@
 - 재시도 성공과 데이터 중복·누락 방지는 다른 계약이다. exactly-once 같은 보장은 producer·processor·sink 전체 범위를 명시한다.
 - 덮어쓰기 범위를 먼저 확인한다. Spark의 기본 static partition overwrite는 partition spec에 맞는 기존 파티션을 새 데이터에 없는 것까지 모두 지운 뒤 쓰고(spec이 없으면 테이블·경로 전체), dbt `--full-refresh`는 incremental 모델을 처음부터 다시 만든다.
 - backfill은 대상 구간·재처리 정책·동시 실행 수를 정하고, 도구가 dry run을 지원하면(예: Airflow 3 `airflow backfill create --dry-run`) 생성될 실행을 먼저 본다. dry run 목록은 실제 재처리 결과의 증명이 아니다.
-- 비용이 큰 조회는 가능하면 dry run의 처리량 추정과 조회별 상한(예: on-demand 과금의 BigQuery `maximumBytesBilled`)으로 먼저 막는다. 추정이 없거나 정확한 값이 아니면(BigQuery `totalBytesProcessedAccuracy`가 `PRECISE`가 아닌 경우) 모르는 값으로 다룬다.
+- 비용이 큰 조회는 가능하면 dry run의 처리량 추정과 조회별 상한(예: on-demand 과금의 BigQuery `maximumBytesBilled`)으로 먼저 막는다. 추정이 없거나 상한이 아니면(BigQuery `totalBytesProcessedAccuracy`가 `LOWER_BOUND`·`UNKNOWN`인 경우) 모르는 값으로 다룬다.
 - 작은 로컬 입력의 성공을 실제 데이터량·분산 실행·운영 성능의 증거로 쓰지 않는다.
 - 스키마 변경은 소비자 호환성을, 상태 변경은 복구·재처리 가능성을 확인한다.
 - 스케줄 등록·DAG 파싱·작업 성공·출력 데이터 정합을 구분한다.
@@ -35,7 +36,7 @@
 ### 레이크하우스·medallion
 
 - 레이어마다 계약을 둔다. bronze는 원본을 바꾸지 않고 수집 메타데이터(수집 시각·원천 파일·offset)와 함께 append해 재처리할 수 있게 한다. silver는 타입 정리·중복 제거·키 보장을, gold는 소비자용 모델과 그 계약·테스트를 맡는다. gold가 bronze를 직접 읽는 식으로 레이어를 건너뛰면 이유를 적는다.
-- MERGE 전에 source를 키 기준으로 중복 제거한다. 같은 target 행에 source 행이 여럿 맞으면 엔진에 따라 실패하거나 결과가 설정에 따라 달라진다. 재실행 단위는 파티션이나 data interval로 정한다.
+- MERGE 전에 source를 키마다 한 행으로 줄인다. 어느 행을 남길지는 순서 컬럼(이벤트 시각·LSN 등)으로 정하고 삭제 이벤트 처리를 정한다. 순서 없는 `dropDuplicates`는 남는 행을 보장하지 않는다. 같은 target 행에 source 행이 여럿 맞으면 엔진에 따라 실패하거나 결과가 설정에 따라 달라진다. 재실행 단위는 파티션이나 data interval로 정한다.
 - 높은 카디널리티 컬럼을 그대로 파티션 키로 쓰지 않는다(Iceberg의 `day()`·`bucket()` 같은 변환은 별개다). 작은 파일이 쌓이면 compaction(Delta `OPTIMIZE`, Iceberg `rewrite_data_files`)을 검토한다.
 - Delta `VACUUM`과 Iceberg `expire_snapshots`는 time travel 범위를 줄이고, 보존 기간을 짧게 잡으면 실행 중인 reader·writer가 깨질 수 있다. Iceberg `remove_orphan_files`의 기준 시간을 짧게 잡으면 진행 중인 쓰기의 파일까지 지운다. 이 명령의 실행과 보존 기간 단축은 되돌릴 수 없으므로 명시적 요청이 있을 때만 한다.
 - 컬럼 추가는 대개 안전하지만 타입 변경·삭제·이름 변경은 소비자와 엔진 지원을 먼저 확인한다. Delta의 `overwriteSchema`는 테이블을 덮어쓴다.
@@ -71,8 +72,8 @@
 | 적용·관측 | 실제 적용 결과·연결·서비스 계약·실패 후 상태 |
 
 - formatter, 정적 validate, plan, apply, 실제 기능 관측을 구분한다.
-- plan·init도 backend·provider·원격 API에 접근할 수 있다. 도구·옵션별 효과를 확인한다. 검토하지 않은 구성(검토 전 브랜치, 새로 들이거나 버전을 바꾼 module·provider)의 init·plan은 현재 자격 증명으로 그 코드를 실행하는 것과 같다. provider·`external` data source·backend 설정이 명령을 실행할 수 있으므로 먼저 검토하거나 자격 증명이 없는 환경에서 확인한다. `init -backend=false`도 provider·module은 내려받고, 이어지는 validate·plan은 그 provider를 실행한다.
-- saved plan 파일·state·`show -json`·`output -json`·`output -raw`는 sensitive 값을 평문으로 담는다(OpenTofu의 state·plan 암호화는 파일만 보호한다). 사람이 읽는 출력은 sensitive로 표시된 값만 가린다. 이 산출물의 원문은 출력하지 않고, plan 출력도 그대로 일반 보고서·Git에 넣지 않는다.
+- plan·init도 backend·provider·원격 API에 접근할 수 있다. 도구·옵션별 효과를 확인한다. 검토하지 않은 구성(검토 전 브랜치, 새로 들이거나 버전을 바꾼 module·provider)의 init·plan은 현재 자격 증명으로 그 코드를 실행하는 것과 같다. provider·`external` data source·backend 설정이 명령을 실행할 수 있으므로 먼저 검토하거나 자격 증명이 없는 환경에서 확인한다. `init -backend=false`도 provider·module은 내려받고, 이어지는 validate는 그 provider를 실행한다(plan은 이전에 초기화한 backend가 있으면 실행된다).
+- saved plan 파일·state·`show -json`·`output -json`·`output -raw`·`output <이름>`은 sensitive 값을 평문으로 담거나 출력한다(OpenTofu의 state·plan 암호화는 파일만 보호한다). 사람이 읽는 plan·show와 전체 `output` 목록은 sensitive로 표시된 값만 가린다. 이 산출물의 원문은 출력하지 않고, plan 출력도 그대로 일반 보고서·Git에 넣지 않는다.
 - `apply <planfile>`과 `-auto-approve`는 확인 없이 적용하고, 삭제도 포함된다. saved plan 적용도 대화형 apply처럼 사용자의 명시적 승인이 있을 때만 한다. `destroy`·`-destroy`·`-target`·`-replace`·`import`·state 변경(rm·mv·push 등)·`force-unlock`은 사용자가 명시적으로 요청했을 때만 쓴다.
 - `plan -detailed-exitcode`의 2는 변경이 있다는 뜻이고(output 변경·move·import 포함) 실패가 아니다.
 - 모든 변경에 자동 rollback이 있다고 가정하지 않는다. 되돌릴 수 없는 변경이면 백업·복구·forward fix 조건을 밝힌다.

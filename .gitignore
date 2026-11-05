@@ -3,6 +3,13 @@
 .env.*
 !.env.example
 credentials/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+kubeconfig
+kubeconfig.y*ml
+*.kubeconfig
 .DS_Store
 CLAUDE.local.md
 .claude/settings.local.json

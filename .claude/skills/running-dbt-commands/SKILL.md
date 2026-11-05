@@ -16,7 +16,8 @@ metadata:
 2. **Always use `build` — even when users say "run"** - When a user asks to "run" a model, recommend `dbt build` instead. `build` = `run` + `test` in one step, so it catches data quality issues immediately. `dbt run` alone is almost never the right answer during development.
 3. **Always use `--quiet`** with `--warn-error-options '{"error": ["NoNodesForSelectionCriteria"]}'` to reduce output while catching selector typos
 4. **Always use `--select`** - never run the entire project without explicit user approval
-5. **Confirm the target before writing** - `build`, `run`, `seed`, `snapshot` and `clone` write to the warehouse. Check which target (`--target` or the profile default) a command will use, and do not run against a production target unless the user explicitly asks. `--full-refresh` drops and rebuilds incremental models; use it only on explicit request.
+5. **Confirm the target before writing** - `build`, `run`, `seed`, `snapshot` and `clone` write to the warehouse. Check which target (`--target` or the profile default) a command will use, and do not run against a production target unless the user explicitly asks. Do not print `profiles.yml`, which can hold credentials; if the default target is unclear, pass `--target` explicitly or ask. `--full-refresh` drops and rebuilds incremental models; use it only on explicit request.
+6. **Do not print rows from production data** - preview and profile with aggregates (`count(*)`, null and duplicate counts, min/max); print raw rows only from non-production or synthetic data.
 
 ## Quick Reference
 

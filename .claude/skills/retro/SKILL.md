@@ -13,7 +13,7 @@ disable-model-invocation: true
    | 프로젝트 명령·환경·함정 | `projects/<name>/AGENTS.md` |
    | dbt·Airflow·Kotlin·K8s 파일의 함정 | `.claude/rules/<도메인>.md` |
    | 모든 작업에 해당하는 행동 규칙 | `AGENTS.md`(드물게) |
-   | 비밀 파일 읽기처럼 도구가 막아야 하는 것 | 비밀 파일이면 `.claude/settings.json` deny, 그 밖은 프로젝트 hook·CI 제안 |
+   | 비밀 파일 읽기처럼 도구가 막아야 하는 것 | 비밀 파일이면 `AGENTS.md` 목록·`.gitignore`·`.claude/settings.json` deny, 그 밖은 CI나 hook 제안(hook 위치는 README의 루프와 규칙 절) |
    | Claude Code 기능 사용 | `CLAUDE.md` |
    | 작업 종류별 판단 기준(도구 공통) | `guides/*.md` |
    | 반복되는 여러 단계 절차 | `.claude/skills/<이름>/` |

@@ -1,5 +1,7 @@
 # Migration Patterns Reference
 
+> 이 저장소 사본은 `astronomer/agents@35b9610bb271`에서 가져와 cron 설정 이름을 바로잡았다. 수정 내역은 `.claude/skills/README.md`에 있다.
+
 Detailed code examples for Airflow 2 to 3 migration.
 
 ## Table of Contents

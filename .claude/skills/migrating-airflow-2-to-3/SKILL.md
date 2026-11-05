@@ -9,17 +9,17 @@ description: Guide for migrating Apache Airflow 2.x projects to Airflow 3.x. Use
 
 This skill helps migrate **Airflow 2.x DAG code** to **Airflow 3.x**, focusing on code changes (imports, operators, hooks, context, API usage).
 
-**Important**: Before migrating to Airflow 3, strongly recommend upgrading to Airflow 2.11 first, then to at least Airflow 3.0.11 (ideally directly to 3.1; check the current Airflow release notes, as this advice may be dated). Other upgrade paths would make rollbacks impossible. See: https://www.astronomer.io/docs/astro/airflow3/upgrade-af3#upgrade-your-airflow-2-deployment-to-airflow-3. Additionally, early 3.0 versions have many bugs - 3.1 provides a much better experience.
+**Important**: Before migrating to Airflow 3, strongly recommend upgrading to Airflow 2.11 first, then to at least Astro Runtime 3.0-11 (Apache Airflow 3.0.x ended at 3.0.6; ideally go directly to 3.1 or later; check the current Airflow release notes, as this advice may be dated). On Astro, other upgrade paths would make rollbacks impossible. See: https://www.astronomer.io/docs/astro/airflow3/upgrade-af3#upgrade-your-airflow-2-deployment-to-airflow-3. Additionally, early 3.0 versions have many bugs - 3.1 provides a much better experience.
 
 ## Migration at a Glance
 
 1. Run Ruff's Airflow migration rules to detect issues (AIR30/AIR301/AIR302/AIR31/AIR311/AIR312), scoped to the DAG code.
-   - `ruff check --preview --select AIR dags/` to list findings first.
+   - `ruff check --preview --select AIR <paths>` (e.g. `dags/`) to list findings first.
    - Apply `--fix` only within the requested scope; add `--unsafe-fixes` only after the user agrees, then review the diff.
 2. Scan for remaining issues using the manual search checklist in [reference/migration-checklist.md](reference/migration-checklist.md).
    - Focus on: direct metadata DB access, legacy imports, scheduling/context keys, XCom pickling, datasets-to-assets, REST API/auth, plugins, and file paths.
    - Hard behavior/config gotchas to explicitly review:
-     - Cron scheduling semantics: consider `AIRFLOW__SCHEDULER__CREATE_CRON_DATA_INTERVALS=True` if you need Airflow 2-style cron data intervals.
+     - Cron scheduling semantics: consider `AIRFLOW__SCHEDULER__CREATE_CRON_DATA_INTERVALS=True` if you need Airflow 2-style cron data intervals. It applies to every DAG with a bare cron schedule and skips one scheduled run if changed after Airflow 3 runs exist, so leave that choice to the user; for a single DAG, pass `CronDataIntervalTimetable` explicitly.
      - `.airflowignore` syntax changed from regexp to glob; set `AIRFLOW__CORE__DAG_IGNORE_FILE_SYNTAX=regexp` if you must keep regexp behavior.
      - OAuth callback URLs add an `/auth/` prefix (e.g. `/auth/oauth-authorized/google`).
      - **Shared utility imports**: Bare imports like `import common` from `dags/common/` no longer work on Astro. Use fully qualified imports: `import dags.common`.
@@ -116,17 +116,17 @@ Use Ruff's Airflow rules to detect and fix many breaking changes automatically.
 - **AIR30 / AIR301 / AIR302**: Removed code and imports in Airflow 3 - **must be fixed**.
 - **AIR31 / AIR311 / AIR312**: Deprecated code and imports - still work but will be removed in future versions; **should be fixed**.
 
-Commands to run (via `uv`) against the project root:
+Commands to run (via `uv`) against the requested paths (`<paths>`, e.g. `dags/`):
 
 ```bash
 # Check Airflow issues without fixing (run this first)
-ruff check --preview --select AIR .
+ruff check --preview --select AIR <paths>
 
 # Apply safe fixes within the requested scope
-ruff check --preview --select AIR --fix .
+ruff check --preview --select AIR --fix <paths>
 
 # Unsafe fixes change behavior more aggressively: only after the user agrees, then review the diff
-ruff check --preview --select AIR --fix --unsafe-fixes .
+ruff check --preview --select AIR --fix --unsafe-fixes <paths>
 ```
 
 ---
